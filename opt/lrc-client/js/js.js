@@ -511,7 +511,7 @@ function checkTime() {
 
 // Callback functions for jsonp
 function init() {
-    setTimeout('lrcServer.getInfo("setInit")', 1000);
+    lrcServer.getInfo("setInit");
     checkTime();
 }
 // Interval to check and see which song is still playing (if at all)
