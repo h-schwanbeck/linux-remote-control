@@ -22,6 +22,7 @@ Servers.prototype.refresh_view = function() {
         // Refresh server click events
         $(".server").unbind('click').click(function() {
             navigator.host = $(this).data("server").ip;
+            lrcServer = new Connector(navigator.host, port, websocketPort, "");
             $("#server-name").html($(this).data("server").name);
             $("#delete-server").data("index", $(this).data("server").index);
         });
