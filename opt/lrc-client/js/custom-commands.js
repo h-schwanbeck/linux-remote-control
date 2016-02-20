@@ -31,13 +31,17 @@ Custom_Commands.prototype.refresh_view = function() {
 
     // Refresh events
     $("#custom-commands .custom-commands a[data-command]").click(function() {
-        $.get(
-            "http://" + navigator.host + ":" + port + "/lrc",
-            {cmd: decodeURI($(this).data("command"))},
+        var res = lrcServer.lrcCommand(decodeURI($(this).data("command")));
+        res.done(
             function(response) {
                 if(response.stdout !== '') {
                     alert(response.stdout);
                 }
+            }
+        );
+        res.fail(
+            function() {
+                alert("Command execution failed");      // Translation needed
             }
         );
     });
