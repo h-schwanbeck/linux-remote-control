@@ -55,7 +55,18 @@ app.all("/music", function(req, res) {
     if ('info' in req.query) {
         exec(music_manager.infos, function(error, stdout, stderr) {
             var infos = music_manager.parse_infos(stdout);
-            res.send(infos);
+            result = infos;
+            if('callback' in req.query) {               // Another dirty hack
+                // We need to convert the json infos to jsonp :(
+                result = req.query['callback'] + '({';
+                for(var key in infos) {
+                    result += key + ': ' + '"' + infos[key] + '",';
+                }
+                result += '})'
+            }
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "X-Requested-With");
+            res.send(result);
         });
     } else if ('action' in req.query && req.query.action in music_manager) {
         var command = music_manager[req.query.action];

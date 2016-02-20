@@ -105,6 +105,7 @@ function responsive_layout(selector) {
 navigator.host = "";
 var port = "3000";
 var websocketPort = "3001";
+var lrcServer = null;
 
 //Clear server to back to index
 $(function() {
@@ -124,8 +125,8 @@ sound_volume.slider({
     value: 0,
     min: 0,
     max: 100,
-    change: function(event, ui) {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd + ui.value + "%"});
+    stop: function(event, ui) {
+        lrcServer.lrcCommand($(this).data("command").cmd + ui.value + "%");
     }
 });
 
@@ -137,8 +138,8 @@ music_timeline.slider({
     value: 0,
     min: 0,
     max: 100,
-    change: function(event, ui) {
-        $.get("http://" + navigator.host + ":" + port + "/music", {action: "seek", args: {proportion: ui.value / 100}});
+    stop: function(event, ui) {
+        lrcServer.musicCommand("seek", {proportion: ui.value / 100});
     }
 });
 
@@ -156,7 +157,7 @@ $(function() {
     });
 
     $("#music-controls a").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/music", {action: $(this).data("action")});
+        lrcServer.musicCommand($(this).data("action"), null);
     });
 });
 
@@ -174,18 +175,18 @@ $(function() {
     });
 
     $("#video-controls #video-play-pause").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 
     $("#video-controls *:not(#video-play-pause)").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 });
 
 // Alt-tab ____________________________________________________________________
 $(function() {
     $("#alt-tab a").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 });
 
@@ -200,7 +201,7 @@ $(function() {
             dangerous = dangerous || command.search(dangerous_commands[index]) != -1;
         }
         if (!dangerous) {
-            $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: command}).done(function(response) {
+            lrcServer.lrcCommand(command).done(function(response) {
                 if (response.error) {
                     alert('An error occured');
                     console.log(response.error);
@@ -224,8 +225,8 @@ screen_brightness.slider({
     value: 0,
     min: 0,
     max: 100,
-    change: function(event, ui) {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd + ui.value});
+    stop: function(event, ui) {
+        lrcServer.lrcCommand($(this).data("command").cmd + ui.value);
     }
 });
 
@@ -242,7 +243,7 @@ $(function() {
 
 $(function() {
     $("#controls-controls a:not(#reboot, #shutdown)").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 });
 
@@ -251,7 +252,7 @@ $(function() {
     $("#controls-controls a#reboot").click(function() {
         var _confirm = confirm("Reboot. Are you sure ?");
         if (_confirm) {
-            $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+            lrcServer.lrcCommand($(this).data("command").cmd);
         }
     });
 });
@@ -261,7 +262,7 @@ $(function() {
     $("#controls-controls a#shutdown").click(function() {
         var _confirm = confirm("Shut Down. Are you sure ?");
         if (_confirm) {
-            $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+            lrcServer.lrcCommand($(this).data("command").cmd);
         }
     });
 });
@@ -270,7 +271,7 @@ $(function() {
 
 $(function() {
     $("#mouse-controls a:not(.slideshow)").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 });
 
@@ -278,7 +279,7 @@ $(function() {
 
 $(function() {
     $(".slideshow-controls a:not(.mouse)").click(function() {
-        $.get("http://" + navigator.host + ":" + port + "/lrc", {cmd: $(this).data("command").cmd});
+        lrcServer.lrcCommand($(this).data("command").cmd);
     });
 });
 
@@ -324,9 +325,7 @@ $(function() {
                 command = "xdotool keydown " + char + " keyup " + char;
             }
 
-            $.get("http://" + navigator.host + ":" + port + "/lrc",
-                    {cmd: command}
-            );
+            lrcServer.lrcCommand(command);
         });
     });
 });
@@ -460,74 +459,60 @@ $(function() {
 
 // Ajax ________________________________________________________________________
 
-var second, artist, album, title, elapsed, duration, volume, backlight;
+var artist, album, title, elapsed, duration, volume, backlight, pc;
+
+// Set some globals to use in checkTime
+function setInit(data, s, x) {
+    artist = unescape(data.artist);
+    album = unescape(data.album);
+    if(unescape(data.title) ==  title && unescape(data.elapsed) > elapsed) {         // Still very crappy :(
+        pc = 2;
+    }
+    else
+    {
+        pc = Math.max(0, pc-1);
+    }
+    title = unescape(data.title);
+    elapsed = unescape(data.elapsed);
+    duration = unescape(data.duration);
+    //volume = unescape(data.volume);
+    //backlight = unescape(data.backlight);
+}
 
 
-// My own spiffy ajax wrapper
-// Because cache should always be false for this kind of stuff
-function pajax(u, cb) {
-    $.ajax({
-        url: "http://" + navigator.host + ":" + port + "/" + u,
-        dataType: "jsonp",
-        cache: false,
-        jsonpCallback: cb});
+function checkTime() {
+    if (pc) {
+        // song is playing
+        $(function() {
+            $(".artist").text(artist);
+            $(".album").text(album);
+            $(".title").text(title);
+            $(".elapsed").text(elapsed);
+            $(".duration").text(duration);
+            //$(".sound-volume").slider("value", volume);
+            //$("#backlight").slider("value", backlight);
+
+            // Music-timeline
+            $("#music-timeline").slider("value", percent(elapsed, duration));
+
+            $(".paused").text("");
+            $("#music-play-pause").addClass("pause");
+            $("#music-play-pause").removeClass("play");
+        });
+    }
+    else {
+        $(function() {
+            $(".paused").text("Paused");
+            $("#music-play-pause").addClass("play");
+            $("#music-play-pause").removeClass("pause");
+        });
+    }
 }
 
 // Callback functions for jsonp
 function init() {
-    pajax("info", "setInit");
-    setTimeout("pajax('info', 'checkTime')", 1000);
+    lrcServer.getInfo("setInit");
+    checkTime();
 }
-
-// Set some globals to use in checkTime
-function setInit(data) {
-    artist = unescape(data.artist);
-    album = unescape(data.album);
-    title = unescape(data.title);
-    elapsed = unescape(data.elapsed);
-    duration = unescape(data.duration);
-    volume = unescape(data.volume);
-    backlight = unescape(data.backlight);
-}
-
-// Checks to see if times are different (time has increased by 1 second)
-// If not, assumes paused, set state to paused
-function checkTime(data) {
-    if (data != 0) {
-        second = data.elapsed;
-
-        if (second > elapsed) {
-            // song is playing
-            $(function() {
-                $(".artist").text(artist);
-                $(".album").text(album);
-                $(".title").text(title);
-                $(".elapsed").text(elapsed);
-                $(".duration").text(duration);
-                $(".sound-volume").slider("value", volume);
-                $("#backlight").slider("value", backlight);
-
-                // Music-timeline
-                $("#music-timeline").slider("value", percent(elapsed, duration));
-
-                $(".paused").text("");
-                $("#music-play-pause").addClass("pause");
-                $("#music-play-pause").removeClass("play");
-            });
-        }
-        else {
-            // is paused
-//            $(function() {
-//                $(".paused").text("Paused");
-//                $("#music-play-pause").addClass("play");
-//                $("#music-play-pause").removeClass("pause");
-//            });
-        }
-    }
-    else {
-        $(".paused").text("An Error Occurred").fadeIn("fast");
-    }
-}
-
 // Interval to check and see which song is still playing (if at all)
-setInterval("init()", 950); // 1 second
+setInterval("init()", 500); // 1/2 second -> Nyquist rate
