@@ -25,11 +25,11 @@
         },
         "install": {
             "p1": "Pro správnou funkčnost aplikace, potřebujete mít na straně serveru nainstalovaný lrc-server.",
-            "p2": "1. Stáhněte si lrc.",
+            "p2": "1. Stáhněte si lrc balíček no váš GNU/Linux systém.",
             "p3": "2. Nainstalujte .deb balíček.",
-            "p4": "3. Přesun ten registr /opt/lrc-client na tvůj přistroj.",
+            "p4": "3. Přesuňte adresář /opt/lrc-client na svůj mobilní telefon.",
             "p5": "3. Spusťte lrc-server.",
-            "p6": "5. Otevři index.html na tvójim přistrojí (PŘISTROJ/lrc-client/index.html) v browseru, připoj ten server a bav se."
+            "p6": "5. Otevřete cesta/k/souboru/index.html na svém telefonu v browseru a připojte se na server."
         },
         "contribute": {
             "p1": "Líbí se vám projekt a chcete pomoci?",
@@ -53,12 +53,12 @@
             "video": "Video",
             "controls": "Základní ovládání",
             "touchpad": "Touchpad",
-            "slideshow": "Slideshow",
+            "slideshow": "Prezentace",
             "custom-commands": "Vlastní příkazy",
             "settings": "Nastavení"
         },
         "controls": {
-            "send-custom-command": "Odeslat příkaz",
+            "send-custom-command": "Odeslat vlastní příkaz",
             "command": "příkaz",
             "send-command": "odeslat příkaz"
         },
@@ -70,8 +70,8 @@
         "settings": {
             "language": "Jazyk (language)",
             "theme": "Téma",
-            "audio": "Přehrávač audio",
-            "video": "Přehrávač video",
+            "audio": "Přehrávač zvuku",
+            "video": "Přehrávač videí",
             "cancel": "Zrušit",
             "save": "Uložit"
         },
