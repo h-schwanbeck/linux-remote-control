@@ -134,7 +134,6 @@ One of the following music players.
 ## Bugs
 The project still has some bugs that you can fix.
 
-- Click by tapping the touchpad;
 - Organize and modularize my dirty Javascript =/;
 
 ## License
