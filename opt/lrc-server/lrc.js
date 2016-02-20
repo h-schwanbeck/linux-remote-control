@@ -23,17 +23,14 @@ var handleMessage = function(message) {
     switch (prefix) {
         case CLICK_PREFIX:
             var button = message;
-            console.log('xdotool click ' + button);
             exec('xdotool click ' + button, function puts(error, stdout, stderr) {});
         break;
         case MOUSEUP_PREFIX:
             var button = message;
-            console.log('xdotool mouseup ' + button);
             exec('xdotool mouseup ' + button, function puts(error, stdout, stderr) {});
         break;
         case MOUSEDOWN_PREFIX:
             var button = message;
-            console.log('xdotool mousedown ' + button);
             exec('xdotool mousedown ' + button, function puts(error, stdout, stderr) {});
         break;
         case MOVE_PREFIX:
